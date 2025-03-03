@@ -418,3 +418,75 @@ lev             ALL=(daniel) NOPASSWD: /usr/bin/openssl,\
 
 🌞 **Misconf ?**
 
+## Part V : FTP
+
+🌞 **Mettre en place un serveur FTP + TLS**
+
+Toutes les commandes :
+```
+sudo dnf install vsftpd -y
+sudo systemctl start vsftpd
+sudo systemctl enable vsftpd
+sudo mkdir /etc/ssl/private
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/private/vsftpd.key -out /etc/ssl/certs/vsftpd.crt
+sudo firewall-cmd --add-port=21/tcp --permanent
+sudo firewall-cmd --add-port=30000-31000/tcp --permanent
+sudo firewall-cmd --reload
+sudo vim /etc/vsftpd/vsftpd.conf
+sudo vim /etc/vsftpd/user_list
+su suha
+cd
+touch test.txt
+```
+
+Ajouter les users souhanté dans `/etc/vsftpd/user_list`, et voici la conf de `/etc/vsftpd/vsftpd.conf`
+```
+[axel@TP1-Secu-SE ~]$ sudo cat /etc/vsftpd/vsftpd.conf | grep -E "^#" -v
+anonymous_enable=NO
+local_enable=YES
+write_enable=YES
+local_umask=022
+dirmessage_enable=YES
+xferlog_enable=YES
+connect_from_port_20=YES
+xferlog_std_format=YES
+chroot_local_user=YES
+allow_writeable_chroot=YES
+listen=NO
+listen_ipv6=YES
+pam_service_name=vsftpd
+userlist_enable=YES
+userlist_file=/etc/vsftpd/user_list
+userlist_deny=NO
+ssl_enable=YES
+force_local_logins_ssl=YES
+force_local_data_ssl=YES
+allow_anon_ssl=NO
+ssl_tlsv1=YES
+ssl_tlsv1_1=YES
+ssl_tlsv1_2=YES
+ssl_sslv2=NO
+ssl_sslv3=NO
+require_ssl_reuse=NO
+rsa_cert_file=/etc/ssl/certs/vsftpd.crt
+rsa_private_key_file=/etc/ssl/private/vsftpd.key
+ssl_ciphers=HIGH
+pasv_min_port=30000
+pasv_max_port=31000
+```
+
+Droit des clés :
+```
+[axel@TP1-Secu-SE ~]$ sudo ls -la /etc/ssl/private/vsftpd.key
+-rw-------. 1 root root 1700 Mar  2 05:10 /etc/ssl/private/vsftpd.key
+[axel@TP1-Secu-SE ~]$ sudo ls -la /etc/ssl/certs/vsftpd.crt
+-rw-------. 1 root root 1237 Mar  2 05:10 /etc/ssl/certs/vsftpd.crt
+```
+
+Preuve que ça fonctionne :
+```
+axel@Dell-G15:~$ lftp -u suha,AxelBianca1234! -e "set ftp:ssl-force yes; set ftp:ssl-protect-data yes; set ssl:verify-certificate no" ftp://10.1.1.11
+lftp suha@10.1.1.11:~> ls
+-rw-r--r--    1 1002     1008            0 Mar 02 05:24 test.txt
+lftp suha@10.1.1.11:/> 
+```
