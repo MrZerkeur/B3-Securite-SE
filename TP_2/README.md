@@ -647,3 +647,29 @@ sudo sysdig -r curl.scap
 ```
 
 Et la capture est [ICI](/TP_2/curl.scap)
+
+## Part III : Service Hardening
+
+### 1. Install NGINX
+
+### 2. NGINX Tracing
+
+🌞 **Tracer l'exécution du programme NGINX**
+
+```
+sudo sysdig proc.name=nginx -w nginx.scap
+```
+
+Capture [ICI](/TP_2/nginx.scap)
+
+```
+[axel@TP2-Secu-SE ~]$ sudo sysdig -r nginx.scap | cut -d ' ' -f7 | sort | uniq | tr -s "\n" " "
+accept4 access arch_prctl bind brk clone close connect dup2 epoll_create epoll_create1 epoll_ctl epoll_wait eventfd2 execve exit_group fcntl fstat futex getdents64 geteuid getpid getppid getrandom gettid ioctl io_setup listen lseek mkdir mmap mprotect munmap newfstatat openat prctl pread prlimit pwrite read recvfrom recvmsg rseq rt_sigaction rt_sigprocmask rt_sigreturn rt_sigsuspend sendfile sendmsg sendto setgid setgroups set_robust_list setsid setsockopt set_tid_address setuid socket socketpair statfs sysinfo timerfd_create timerfd_settime umask uname unlink wait4 write writev
+```
+
+### 3. NGINX Hardening
+
+🌞 **HARDEN**
+
+Et voici le fichier [nginx.service](./nginx.service)
+
