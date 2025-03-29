@@ -673,3 +673,33 @@ accept4 access arch_prctl bind brk clone close connect dup2 epoll_create epoll_c
 
 Et voici le fichier [nginx.service](./nginx.service)
 
+## Part IV : My shitty app
+
+### 1. Test
+
+🌞 **Téléchargez l'app Python dans votre VM**
+
+```
+[axel@TP2-Secu-SE ~]$ sudo curl https://gitlab.com/it4lik/b3y-csec-2024/-/raw/main/tp/2/calc.py -o /opt/calc.py
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   659  100   659    0     0   5780      0 --:--:-- --:--:-- --:--:--  5831
+```
+
+🌞 **Lancer l'application dans votre VM**
+
+```
+[axel@TP2-Secu-SE ~]$ python3 /opt/calc.py 
+Réponse envoyée au client.
+```
+
+```
+axel@Dell-G15:~/Github/B3-Securite-SE/TP_2$ nc 10.1.1.12 13337
+Hello6+2
+8Hello
+```
+
+### 2. Création de service
+
+🌞 **Créer un service calculatrice.service**
+
