@@ -152,3 +152,105 @@ Max kernel policy version:      33
 
 3. SELinux dispose de différents modes, quels sont-ils ? Est a quoi sert chaque mode ?
 
+Il existe 3 modes :
+
+- Enforcing qui est le mode actif par défaut, les règles de sécurité sont strictement définies dans la politique, en cas de non respect de ces dernières, les actions sont bloquées et loggées.
+- Permissive qui est généralement utilisé pour du test ou debug, ce mode fonctionne comme *enforcing* mais les actions ne sont pas bloquées, seulement loggées.
+- Disabled qui est lorsque SELinux est désactivé, les actions ne sont ni loggées ni bloquées.
+
+
+4. Que se passe-t-il si un profil Selinux est configuré en mode « enforce » et qu’il ne convient pas
+parfaitement au binaire associé ?
+
+L'éxécution sera bloquée et l'erreur loggée. Le programme risque de mal fonctionner ou ne pas fonctionner du tout.
+
+### 3.4 Modification d’un profil Selinux
+
+1. Quel est le contexte des différents fichiers du serveur web Apache ?
+
+```
+[axel@TP3-Secu-SE ~]$ ls -d -Z /var/www/html
+system_u:object_r:httpd_sys_content_t:s0 /var/www/html
+
+[axel@TP3-Secu-SE ~]$ ls -d -Z /var/www/cgi-bin/
+system_u:object_r:httpd_sys_script_exec_t:s0 /var/www/cgi-bin/
+```
+
+Contextes : `httpd_sys_content_t` & `httpd_sys_script_exec_t`
+
+2. Quel est le contexte du service Apache ?
+
+```
+[axel@TP3-Secu-SE ~]$ ps -eZ | grep httpd
+system_u:system_r:httpd_t:s0        787 ?        00:00:00 httpd
+system_u:system_r:httpd_t:s0        813 ?        00:00:00 httpd
+system_u:system_r:httpd_t:s0        815 ?        00:00:01 httpd
+system_u:system_r:httpd_t:s0        816 ?        00:00:01 httpd
+system_u:system_r:httpd_t:s0        817 ?        00:00:01 httpd
+```
+
+Contexte : `httpd_t`
+
+3. Activez le mode « enforce » sur le profil apache, le serveur web fonctionne-t-il ?
+
+Modification de `/etc/sysconfig/selinux` pour passer SELinux en enforcing de manière permanente, y ajouter :
+```
+SELINUX=enforcing
+```
+
+Est-ce que le serveur web fonctionne toujours ?
+```
+axel@Dell-G15:~$ curl http://10.1.1.13
+<!doctype html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <title>HTTP Server Test Page powered by: Rocky Linux</title>
+    <style type="text/css">
+      /*<![CDATA[*/
+      
+      html {
+        height: 100%;
+        width: 100%;
+...
+```
+Oui, il fonctionne toujours.
+
+4. Désactivé le mode « enforce » puis modifier la configuration du serveur apache pour placer le
+path du serveur web dans /srv/srv/srv_1/. Redémarrer ensuite le service apache
+
+Modification de `/etc/sysconfig/selinux` pour passer SELinux en permissive de manière permanente, y ajouter :
+```
+SELINUX=permissive
+```
+
+Modification de `/etc/httpd/conf/httpd.conf` pour changer le path du serveur web :
+```
+[axel@TP3-Secu-SE ~]$ cat /etc/httpd/conf/httpd.conf | grep /srv/srv/srv_1
+DocumentRoot "/srv/srv/srv_1"
+<Directory "/srv/srv/srv_1">
+```
+
+Est-ce que le serveur web fonctionne toujours ?
+```
+axel@Dell-G15:~$ curl http://10.1.1.13
+<!doctype html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <title>HTTP Server Test Page powered by: Rocky Linux</title>
+    <style type="text/css">
+      /*<![CDATA[*/
+      
+      html {
+        height: 100%;
+        width: 100%;
+...
+```
+Oui, il fonctionne toujours.
+
+5. Activez de nouveau le mode « enforce » sur le profil Apache. Le serveur web est-il de nouveau
+accessible ? Pourquoi ?
+
