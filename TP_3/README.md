@@ -258,7 +258,10 @@ accessible ? Pourquoi ?
 
 ```
 [axel@TP3-Secu-SE ~]$ sudo cat /var/log/httpd/error_log | tail -n 1
-[Tue Apr 08 22:59:44.643801 2025] [core:error] [pid 817:tid 926] (13)Permission denied: [client 10.1.1.1:40306] AH00035: access to /index.html denied (filesystem path '/srv/srv/srv_1/index.html') because search permissions are missing on a component of the path
+[Tue Apr 08 22:59:44.643801 2025] [core:error] [pid 817:tid 926] (13)Permission
+denied: [client 10.1.1.1:40306] AH00035: access to /index.html denied (filesystem
+path '/srv/srv/srv_1/index.html') because search permissions are missing on a
+component of the path
 ```
 
 Le fichier n'est pas accessible car il est dans un contexte différent je suppose.
@@ -356,4 +359,3 @@ Mcstrans n'est pas installé.
 setroubleshoot-3.3.32-1.el9.x86_64
 ```
 SETroubleshoot est installé mais il était nécéssaire plus haut dans le TP.
-
