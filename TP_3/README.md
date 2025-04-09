@@ -1,5 +1,7 @@
 # TP3 : SELinux
 
+Réalisé par Axel BROQUAIRE, B3 - Cybersécurité
+
 ## Les consignes :
 
 ### 3.1 Installation du systèmes d'exploitations :
@@ -253,4 +255,105 @@ Oui, il fonctionne toujours.
 
 5. Activez de nouveau le mode « enforce » sur le profil Apache. Le serveur web est-il de nouveau
 accessible ? Pourquoi ?
+
+```
+[axel@TP3-Secu-SE ~]$ sudo cat /var/log/httpd/error_log | tail -n 1
+[Tue Apr 08 22:59:44.643801 2025] [core:error] [pid 817:tid 926] (13)Permission denied: [client 10.1.1.1:40306] AH00035: access to /index.html denied (filesystem path '/srv/srv/srv_1/index.html') because search permissions are missing on a component of the path
+```
+
+Le fichier n'est pas accessible car il est dans un contexte différent je suppose.
+
+```
+[axel@TP3-Secu-SE ~]$ ls -d -Z /srv/srv/srv_1/index.html 
+unconfined_u:object_r:var_t:s0 /srv/srv/srv_1/index.html
+```
+
+6. Ajuster le profil SELinux avec « sealert » pour correspondre à la nouvelle configuration du
+service Apache. Expliquez brièvement l’utilité et la méthode d’utilisation de « sealert ».
+
+La commande `sudo sealert -a /var/log/audit/audit.log` permet de lire beaucoup plus facilement les logs de SELinux et d'en conclure que :
+```
+SELinux is preventing /usr/sbin/httpd from getattr access on the file /srv/srv/srv_1/index.html.
+
+*****  Plugin catchall_labels (83.8 confidence) suggests   *******************
+
+If you want to allow httpd to have getattr access on the index.html file
+Then you need to change the label on /srv/srv/srv_1/index.html
+```
+
+On change le contexte du fichier avec ces commandes :
+```
+sudo semanage fcontext -a -t httpd_sys_content_t "/srv/srv/srv_1/index.html"
+
+sudo restorecon -v /srv/srv/srv_1/index.html
+```
+
+7. Une fois le profil modifié et activé en mode enforce, le service Apache est-il accessible depuis
+le navigateur ?
+
+Maintenant, ça fonctionne et donne notre `index.html` personnalisé :
+```
+axel@Dell-G15:~$ curl http://10.1.1.13
+<h1>Test</h1>
+```
+
+### 3.5 Durcissement de la configuration de SELinux
+
+Je vais donc suivre les recommandations du CIS, plus particulièrement la partie 1.3.1 Configure SELinux.
+
+1.3.1.1 Ensure SELinux is installed
+```
+[axel@TP3-Secu-SE ~]$ rpm -q libselinux
+libselinux-3.6-1.el9.x86_64
+```
+SELinux installé
+
+1.3.1.2 Ensure SELinux is not disabled in bootloader configuration
+```
+[axel@TP3-Secu-SE ~]$ sudo grubby --info=ALL | grep -Po '(selinux|enforcing)=0\b'
+```
+SELinux n'est pas désactivé dans la configuration du bootloader.
+
+1.3.1.3 Ensure SELinux policy is configured
+```
+[axel@TP3-Secu-SE ~]$ sestatus | grep Loaded
+Loaded policy name:             targeted
+```
+La policy est bien configurée.
+
+1.3.1.4 Ensure the SELinux mode is not disabled
+```
+[axel@TP3-Secu-SE ~]$ getenforce
+Enforcing
+```
+SELinux n'est pas désactivé.
+
+1.3.1.5 Ensure the SELinux mode is enforcing
+```
+[axel@TP3-Secu-SE ~]$ getenforce
+Enforcing
+```
+SELinux est bien en enforcing.
+
+1.3.1.6 Ensure no unconfined services exist
+```
+[axel@TP3-Secu-SE ~]$ ps -eZ | grep unconfined_service_t
+[axel@TP3-Secu-SE ~]$
+```
+Il n'y a pas de "unconfined services".
+
+1.3.1.7 Ensure the MCS Translation Service (mcstrans) is not
+installed
+```
+[axel@TP3-Secu-SE ~]$ rpm -q mcstrans
+package mcstrans is not installed
+```
+Mcstrans n'est pas installé.
+
+1.3.1.8 Ensure SETroubleshoot is not installed
+```
+[axel@TP3-Secu-SE ~]$ rpm -q setroubleshoot
+setroubleshoot-3.3.32-1.el9.x86_64
+```
+SETroubleshoot est installé mais il était nécéssaire plus haut dans le TP.
 
